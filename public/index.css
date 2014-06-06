@@ -1,0 +1,38 @@
+body{
+  background-color: #000;
+}
+
+main{
+  background: rgba(0, 0, 0, .2);
+  background-size: cover;
+  height: 100vh;
+  width: 100vw;
+}
+
+#name{
+  text-transform: capitalize;
+  font-size: 60px;
+  margin: 0px;
+  padding: 0px;
+}
+
+#description{
+  text-transform: capitalize;
+  font-size: 30px;
+  margin: 0px;
+}
+
+#controlsContainer{
+  transition: all 1s;
+  padding-top: 20px;
+  height: 0pt;
+  overflow: hidden;
+  opacity: .1;
+  width: 50%;
+  margin: auto;
+}
+
+#controlsContainer:hover{
+   height: 70pt;
+   opacity: 1;
+}
