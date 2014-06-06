@@ -10,9 +10,12 @@
   "license": "ISC",
   "dependencies": {
     "express": "^4.4.1",
+    "keypress": "^0.2.1",
+    "logfmt": "^1.1.2",
     "mongoose": "^3.8.12",
     "passport": "^0.2.0",
     "querystring": "^0.2.0",
+    "socket.io": "^1.0.4",
     "spooky": "^0.2.4",
     "url": "^0.10.1"
   }

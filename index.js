@@ -1,111 +1,72 @@
-try {
-    var Spooky = require('spooky');
-} catch (e) {
-    var Spooky = require('../lib/spooky');
-}
+/*
+	John Drogo
+	June 6, 2014
 
+    Crawling Specter
+	
+    Crawles a webpage looking for links.
+    Saves links in a MongoDB, and then processes the next link.
+    Continues until all links have been exhausted.
+
+    This file initiates children processes that actually preform the crawl.
+*/
+
+var child = require("child_process")
+var key = require("keypress")
+var server = require("./server.js")
+var stream = require("stream")
 var links = require("./links")
 
-console.log("Hi.")
+key(process.stdin)
+process.stdin.setRawMode(true)
 
-var setup, queue, visited, spooky, pullLinks, setup
-var maxpages = 10
-var currentpage = 0
+var numWorkers = 1;
+var workers = []
+var updateParameters
 
-var config = {
-    child: {
-        transport: 'http'
-    },
-    casper: {
-        clientScripts: [ "//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"],
-        logLevel: 'debug',
-        verbose: true
+
+function killEverything(metoo){
+    //Time to kill all children processes...
+    console.log("Killing all children processes and quiting.")
+    for (worker = 0; worker < numWorkers; worker++){
+        console.log("\tKilling child " + worker + ".")
+        workers[worker].kill()
+    }
+    
+    if (metoo){
+        console.log("Killing self...")
+        server.updateUI({ count: "N/A", log: "Killing self..." })
+        process.kill()
     }
 }
 
-//Start URL.
-queue = ["http://en.wikipedia.org/wiki/Spooky_the_Tuff_Little_Ghost"]
-visited = []
-spooky = null
 
-pullLinks = function (){
-    countAnchors = false;
-    visited = []
-    linkcount = 0;
-    link = 0
-    
-    spooky.start(queue[0])
-    spooky.then([{countAnchors: countAnchors, currentpage: currentpage}, function () {  
-        //Get ready to hand off to link scanner.
-        var urlsolver = require('url')
-        linkcount = 0
-        linksskipped = 0;
-        
-        winurl = this.evaluate(function(){return window.location.href})
-        do{
-            link = this.evaluate(function(index){return $("a[href]:eq("+index+")").attr("href")}, linkcount)
-            linksskipped += 1;
-            linkcount += 1;
-        } while (link && (link.indexOf("#") != -1 && !countAnchors))
-        //Skip anchors if flag is set.
-     
-        while (link){
-            this.emit("link", urlsolver.resolve(winurl, link), currentpage, linkcount-linksskipped)
-            winurl = this.evaluate(function(){return window.location.href})
-            do{
-                link = this.evaluate(function(index){return $("a[href]:eq("+index+")").attr("href")}, linkcount)
-                linksskipped += 1;
-                linkcount += 1;
-            } while (link && (link.indexOf("#") != -1 && !countAnchors))
-            //Skip anchors if flag is set.
-            //Make the while statement true to skip the current link.
-        }
-     
-        this.emit('hello', "\nOn page: " + winurl + " Found: " + linkcount + " pages.");
-    }]);
-
-    return spooky.run()
+updateParameters = function(parameters){
+    console.log("UPDATE")
+    killEverything(false)
+    links.loadConnection(function(){
+        links.purgeDatabase(function (){
+            links.closeConnection();
+            server.saveLink( parameters.url, 0, 0, function (){startCrawl()} )
+        })
+    });
 }
 
 
-resetSpooky = function(){console.log("\t" + queue[0]); spooky = new Spooky(config, setup)}
+server.start();
+server.setParamCallback(updateParameters)
+process.stdin.on("keypress", function(hmm, key){ if (key && key.ctrl && key.name == "c"){ killEverything(true) }  });
 
 
-setup = function (err) {
-    
-    if (err) {
-        e = new Error('Failed to initialize SpookyJS');
-        e.details = err;
-        console.log("Error, could not initialize SpookyJS.")
-        throw e;
+function startCrawl(){
+    console.log("New crawl at: " + new Date().getTime());
+    console.log("Let's get this show on the road.");
+    for (worker = 0; worker < numWorkers; worker++){
+        workers[worker] = child.fork("worker.js", [worker]);
+        workers[worker].on("message", function(update){server.updateUI(update)});
     }
-
-    spooky.on("link", function(url, depth, numberlinks){
-        links.saveLink(url, depth, numberlinks)
-    });
-
-    spooky.on('hello', function (greeting) {
-        console.log(greeting);
-        console.log("Number queued is now: " + queue.length + ".\nNext page")
-    });
-    
-    spooky.on('error', function (e, stack) {
-        //console.error(e);
-        //if (stack) {console.log(stack);}
-    });
-
-    spooky.on('run.complete', function(){
-        //Clear the queue, and wait until we know our next link before spawning another spooky.
-        //DEBUG2console.log("Done.")
-        currentpage += 1
-        queue.shift();       
-        spooky.destroy();
-        links.fetchNextLink(queue, resetSpooky);
-   })
-
-    return pullLinks();
-
+    console.log("Successfully forked " + numWorkers + " subprocesses.");
 }
 
-links.loadConnection()
-spooky = new Spooky(config, setup);
+
+startCrawl()

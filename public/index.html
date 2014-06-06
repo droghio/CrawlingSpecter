@@ -1,7 +1,7 @@
 <!DOCTYPE html>
-<html ng-app="WeatherAppJSON">
+<html ng-app="CrawlingSpecter">
 	<head>
-		<title>WeatherNode</title>
+		<title>Crawling Specter</title>
 
 		<link href="index.css" rel="stylesheet" type="text/css"></link>
 		<link rel="icon" type="image/png" href="imgs/favicon.png"></link>
@@ -9,39 +9,39 @@
 		<script src="js/jquery/jquery.min.js" type="text/javascript"></script>
 		<script src="js/angularjs/angular.min.js" type="text/javascript"></script>
 		<script src="controllers.js" type="text/javascript"></script>
+
+        <script src="https://cdn.socket.io/socket.io-1.0.4.js"></script>
+        <script src="/socket.io/socket.io.js"></script>
+        <script>var socket = io.connect(window.location.hostname + ":8001");</script>
+        <script type="text/javascript">
+            socket.on("uiUpdate", function (update){$("#countQueue").text(update.count); $("#log").append(update.log+"\n\n"); $("#log").scrollTop($("#log").scrollHeight)})
+
+            function updateParameters(){
+                socket.emit("paramUpdate", { url: $("#url").val(), numbots: $("#numberWorkers").val() })
+            }
+        </script>
 		
-		<meta name="apple-mobile-web-app-capable" content="yes"></meta>
+        <meta name="apple-mobile-web-app-capable" content="yes"></meta>
 		<meta name="apple-mobile-web-app-status-bar-style" content="black"></meta>
 		<meta name = "viewport" content ="user-scalable=no, width=640, initial-scale=.5"></meta>
 		<link rel="apple-touch-startup-image" href="imgs/iphoneicon.png"></link>
 	</head>
 
 	<body style="margin: 0px;">
-		<section ng-controller="WeatherController" ng-init="backgroundImage='cloudy.jpg'">
+		<section ng-controller="crawlerController">
 			<main style="height: 100vh; width: 100vw;">
-				<br />
-				<div style="margin: auto; padding-top: 50vh; margin-top: -300px; text-align: center; color: white; font-family: arial;">
-					<div style="font-size: 200px;">{{ temp }}</div>
-					<p id="name">{{ city }}</p>
-					<p id="description">{{ weather }}</p>
-					<div id="controlsContainer" style="margin-top: 17vh; position: relative;">
-						<input ng-enter="location = properties.location.value; update()" ng-model="properties.location.value" type="text" id="location" value="syracuse, ny"></input>
-						<p>
-							<input type="radio" ng-click="use='celsius'; update()" ng-init="use='celsius'" name="tempsettings" value="celsuis" checked> Celsius</input>
-							<input type="radio" ng-click="use='fahrenheit'; update()" name="tempsettings" value="fahrenheit"> Fahrenheit</input>
-							<input type="radio" ng-click="use='kelvin'; update()" name="tempsettings" value="kelvin"> Kelvin</input>
-						</p>
-						<div style="margin: 0px; position: absolute; bottom: 0px; text-align: center; width: 100%; background: url('imgs/PullDown.png');"></div>
-					</div>
-				</div>
-			</main>
-			<main id="stageforground" style="background-image: url('imgs/cloudy.jpg'); position: absolute; top: 0px; left: 0px; z-index: -1;"></main>
-			<main id="stagebackground" style="background-image: url('imgs/{{ backgroundImage }}'); position: absolute; top: 0px; left: 0px; z-index: -2;"></main>
+				<p>
+                    Url: <input type="url" id="url"></input>
+                    <input type="button" id="startcrawl" value="Start Crawl" onclick="updateParameters()"></input>
+                    <br />
+                    Number Workers: <input type="number" id="numberWorkers"></input>
+                    <br/>
+                    <textarea rows="10" style="width:100%" id="log" readonly></textarea>
+                    <br />
+                    Links queued: <div id="countQueue" style="display: inline">hi</div>
+				</p>
+            </main>
 		</section>
-
-		<footer style="font-size: 10px; color: white; margin-top: -20px; text-align: center; font-family: arial;">Weather
-			 information provided by Open Weather Map. Images from Wikipedia and the United States Environmental Protection Agency.
-		</footer>
 	</body>
 
 </html>
