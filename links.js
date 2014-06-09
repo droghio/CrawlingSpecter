@@ -23,6 +23,7 @@ module.exports = {
     loadConnection: function(callBack){
         mongoose.connect("mongodb://" + mongouser + ":" + mongopassword + "@" + mongourl);
         mongoose.connection.on("error", console.error.bind(console, "ERROR: Quiting due to MongoDB connection error: "));
+        //console.log(mongoose.connection);
         mongoose.connection.once("open", callBack)
     },
 

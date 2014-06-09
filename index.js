@@ -20,7 +20,7 @@ var links = require("./links")
 key(process.stdin)
 process.stdin.setRawMode(true)
 
-var numWorkers = 1;
+var numWorkers = 32;
 var workers = []
 var updateParameters
 var status = "idle"

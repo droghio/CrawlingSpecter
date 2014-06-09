@@ -15,12 +15,8 @@
 
 
 //--Includes-----------------------
-try {
-    var Spooky = require('spooky');
-} catch (e) {
-    var Spooky = require('../lib/spooky');
-}
-
+var cheerio = require('cheerio')
+var request = require('request')
 var links = require("./links")
 
 console.log("Child " + process.argv[2] + " says: " + "Hi.")
@@ -28,7 +24,7 @@ console.log("Child " + process.argv[2] + " says: " + "Hi.")
 
 
 //--Initialization.----------------
-var setup, queue, visited, spooky, pullLinks, setup, worker
+var setup, queue, visited, spooky, pullLinks, setup, worker, crawldone
 var maxpages = 10
 var currentpage = 0
 
@@ -36,7 +32,6 @@ var currentpage = 0
 process.on("message", function (data){
     if (data.stop == "SIGTERM"){
         links.closeConnection(function (){
-            spooky.destroy()
             lastmessage = "Child " + process.argv[2] + " says: " + "T'was a short life."
             process.send({ log: lastmessage })
             process.exit(0)
@@ -45,7 +40,7 @@ process.on("message", function (data){
 })
 
 
-var resetSpooky = function(){
+var resetCrawl = function(){
 
     if (!queue[0]){
         lastmessage = "\nChild " + process.argv[2] + " says: " + "Work done, queue empty."
@@ -57,25 +52,28 @@ var resetSpooky = function(){
     //lastmessage += ("\n\t" + queue[0]);
     //process.send({ log: lastmessage })
 
-    spooky = new Spooky(config, setup)
+    setup()
+
 }
 
 
-var config = {
-    child: {
-        transport: 'http'
-    },
-    casper: {
-        clientScripts: [ "//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"],
-        logLevel: 'debug',
-        verbose: true
-    }
-}
+var crawldone = function(winurl, linkcount, resstat) {
+    console.log("\nChild " + process.argv[2] + " says: " + "\nOn page: " + winurl + " Found: " + linkcount + " pages.");
+    lastmessage = "\tChild " + process.argv[2] + " says: " + "On page: " + winurl + " Found: " + linkcount + " pages."
+
+    //It is possible for our output to be a little jumbled since we are using promises to print.
+    //It should still be readable, but lines might be flipped.
+    links.updateLinkStatus(winurl, currentpage, linkcount, (Number(resstat) < 400), null)
+    links.countDocuments(function (count){console.log("Number queued is now: " + count + ".\nNext page"); process.send({ count: count, log: lastmessage })});
+
+    currentpage += 1
+    queue.shift();
+    links.fetchNextLink(queue, resetCrawl);
+};
 
 
 queue = []
 visited = []
-spooky = null
 lastmessage = ""
 
 
@@ -87,15 +85,16 @@ pullLinks = function (){
     link = 0
     currentpage = 100;
     
-    spooky.start(queue[0])
-    spooky.then([{countAnchors: countAnchors, currentpage: currentpage, links: links}, function (res) {
+    request(queue[0], function (err, res, html) {
+
+        var $ = cheerio.load(html)
 
         var urlsolver = require('url')
         linkcount = 0
         linksskipped = 0;
         
         //Grab the first link.
-        winurl = this.evaluate(function(){return window.location.href})
+        winurl = queue[0]
         link = null
         firstloop = true;
  
@@ -105,11 +104,11 @@ pullLinks = function (){
             //Tell node instance we found a link and to save it.
             //We resolve the link to get the actual URL it is referring to.
             if (link)
-                this.emit("link", urlsolver.resolve(winurl, link), 0, 0)
-
+                links.saveLink(urlsolver.resolve(winurl, link), 0, 0, null) 
+     
             //Find next valid link.
             do{
-                link = this.evaluate(function(index){return $("a[href]:eq("+index+")").attr("href")}, linkcount)
+                link = $("a").eq(linkcount).attr("href")
                 linksskipped += 1;
                 linkcount += 1;
             } while (link && (link.indexOf("#") != -1 && !countAnchors))
@@ -118,53 +117,12 @@ pullLinks = function (){
 
             firstloop = false;
         }
-        this.emit('crawldone', winurl, linkcount, res.status);
-    }]);
-
-    return spooky.run()
+        return crawldone(winurl, linkcount, res.statusCode);
+    });
 }
 
 
-setup = function (err) {
-    
-    if (err) {
-        e = new Error('Failed to initialize SpookyJS');
-        e.details = err;
-        console.log("Child " + process.argv[2] + " says: " + "Error, could not initialize SpookyJS.")
-        throw e;
-    }
-
-    spooky.on("logmy", function(data){  console.log( data )  });
-
-    spooky.on("link", function(url, depth, numberlinks){
-        links.saveLink(url, depth, numberlinks, 0)
-    });
-
-    spooky.on('crawldone', function (winurl, linkcount, resstat) {
-        console.log("\nChild " + process.argv[2] + " says: " + "\nOn page: " + winurl + " Found: " + linkcount + " pages.");
-        lastmessage = "\tChild " + process.argv[2] + " says: " + "On page: " + winurl + " Found: " + linkcount + " pages."
-
-        //It is possible for our output to be a little jumbled since we are using promises to print.
-        //It should still be readable, but lines might be flipped.
-        links.updateLinkStatus(winurl, currentpage, linkcount, (Number(resstat) < 400), null)
-        links.countDocuments(function (count){console.log("Number queued is now: " + count + ".\nNext page"); process.send({ count: count, log: lastmessage })});
-    });
-    
-    spooky.on('error', function (e, stack) {
-        //console.error(e);
-        //if (stack) {"Child " + process.argv[2] + " says: " + console.log(stack);}
-    });
-
-    spooky.on('run.complete', function(){
-        //Clear the queue, and wait until we know our next link before spawning another spooky.
-        //DEBUG2console.log("Child " + process.argv[2] + " says: " + "Done.")
-        currentpage += 1
-        queue.shift();
-        spooky._rpcClient._server.stream.removeAllListeners()
-        spooky.destroy();
-        links.fetchNextLink(queue, resetSpooky);
-   })
-
+setup = function () {
     return pullLinks();
 }
 
@@ -175,4 +133,6 @@ console.log("Child " + process.argv[2] + " says: " + "Starting crawl on page:")
 lastmessage = "Child " + process.argv[2] + " says: " + "Starting crawl."
 process.send({ log: lastmessage, color: "green" });
 
-links.loadConnection(function(){links.fetchNextLink(queue, resetSpooky)})
+links.loadConnection(function(){links.fetchNextLink(queue, resetCrawl)})
+
+
