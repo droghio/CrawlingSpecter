@@ -26,7 +26,11 @@ module.exports = {
         mongoose.connection.once("open", callBack)
     },
 
-    closeConnection: function(){
+    closeConnection: function(callBack){
+
+        if (callBack)
+            mongoose.connection.once("close", callBack)
+
         mongoose.connection.close()
     },
 
@@ -53,10 +57,11 @@ module.exports = {
         link = new Links({ url: url, visited: false, depth: depth, date: Math.round(new Date().getTime()/1000), numberlinks: numberlinks, valid: false })
         link.save(function (err, link) {
             //DEBUG1if (err) return console.error("Save error: " + err);
+            if (callBack)
+                return callBack();
         });
      	
      	//DEBUG2console.log("Saved\n");
-        return callBack()
     },
 
 
@@ -75,7 +80,9 @@ module.exports = {
                 //DEBUG1console.log("Document Found.\n\tName: %s\n", link.url);
 
             //DEBUG1console.log("End Request\n");
-            queue.push(link.url)
+            if (link)
+                queue.push(link.url)
+
             //DEBUG2console.log(queue)
             return callBack()
     	});
@@ -83,7 +90,42 @@ module.exports = {
 
     
     purgeDatabase: function(callback){
-        var db = mongoose.connection;
-        db.dropCollection("Lists", callback)
+        console.log("Purging database.")
+        var Links = mongoose.model('Links', models.linkscheme);
+        Links.remove(function (error, num){
+            if (error)
+                return console.log("Mongoose Error " + err);
+
+            else{
+                console.log("Purge successful.")
+                callback()
+            }
+        });
+    },
+
+
+    updateLinkStatus: function(url, depth, numberlinks, valid, callBack){
+        var Links = mongoose.model('Links', models.linkscheme);
+        console.log(url)
+        Links.findOne({ url: url }, function (err, link){
+            if (err)
+                return console.log("Mongoose Error " + err);
+
+            if (link){
+                link.numberlinks = numberlinks
+                link.valid = valid
+                link.depth = depth
+
+                link.save()
+
+                if (callBack)
+                   return callBack()
+            }
+
+            else
+                console.log("Link not found in database: " + url)
+
+        })
     }
+
 }

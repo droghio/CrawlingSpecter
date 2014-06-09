@@ -3,6 +3,7 @@ body{
   font-family: Arial;
   overflow: hidden;
   background-color: #000;
+  padding: 1vw;
 }
 
 main{
@@ -39,3 +40,25 @@ main{
    height: 70pt;
    opacity: 1;
 }
+
+#log{
+    background: white;
+    appearance: textarea;
+    margin: 1vw;
+    width: 96vw;
+    color: black;
+    font-family: Courier;
+    font-size: 12pt;
+    height: 120pt;
+    overflow-y: scroll;
+    border: 1px solid gray;
+    padding: 2px;
+}
+
+#log > p{
+    white-space: pre;
+    margin: 8pt;
+}
+
+#countQueue{ display: inline; }
+#status{ display: inline; }

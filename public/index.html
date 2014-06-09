@@ -14,10 +14,21 @@
         <script src="/socket.io/socket.io.js"></script>
         <script>var socket = io.connect(window.location.hostname + ":8001");</script>
         <script type="text/javascript">
-            socket.on("uiUpdate", function (update){$("#countQueue").text(update.count); $("#log").append(update.log+"\n\n"); $("#log").scrollTop($("#log").scrollHeight)})
+            socket.on("uiUpdate", function (update){ 
+                if (update.count) 
+                    $("#countQueue").text(update.count);
 
-            function updateParameters(){
-                socket.emit("paramUpdate", { url: $("#url").val(), numbots: $("#numberWorkers").val() })
+                if (update.status) 
+                    $("#status").text(update.status);
+
+                    
+                $("#log").append("<p style='color:" + update.color + "'>" + update.log + "</p>");
+                $("#log").scrollTop($("#log").scrollHeight
+            )})
+
+            function updateParameters(type){
+                if (type || window.confirm("Starting a new crawl will purge all previous results.\n Continue?"))
+                    socket.emit("paramUpdate", { url: $("#url").val(), numbots: $("#numberWorkers").val(), type: type })
             }
         </script>
 		
@@ -31,14 +42,16 @@
 		<section ng-controller="crawlerController">
 			<main style="height: 100vh; width: 100vw;">
 				<p>
-                    Url: <input type="url" id="url"></input>
-                    <input type="button" id="startcrawl" value="Start Crawl" onclick="updateParameters()"></input>
-                    <br />
-                    Number Workers: <input type="number" id="numberWorkers"></input>
-                    <br/>
-                    <textarea rows="10" style="width:100%" id="log" readonly></textarea>
-                    <br />
-                    Links queued: <div id="countQueue" style="display: inline">hi</div>
+                    <p>
+                        Url: <input type="url" id="url"></input>
+                        <input type="button" id="startcrawl" value="Start Crawl" onclick="updateParameters()"></input>
+                        <input type="button" id="stopcrawl" value="Stop Crawl" onclick="updateParameters('stop')"></input>
+                        <input type="button" id="resumecrawl" value="Resume Crawl" onclick="updateParameters('resume')"></input>
+                    </p>
+                    <p>Number Workers: <input type="number" id="numberWorkers" value=1></input></p>
+                    <p><div id="log"></div></p>
+                    <div>Links queued: <p id="countQueue">hi</p></div>
+                    <div>Status: <p id="status"></p></div>
 				</p>
             </main>
 		</section>
