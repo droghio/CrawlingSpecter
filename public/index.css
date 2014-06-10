@@ -41,7 +41,7 @@ main{
    opacity: 1;
 }
 
-#log{
+#log, #deadlinks{
     background: white;
     appearance: textarea;
     margin: 1vw;
@@ -55,10 +55,10 @@ main{
     padding: 2px;
 }
 
-#log > p{
+#log, #deadlinks > p{
     white-space: pre;
     margin: 8pt;
 }
-
 #countQueue{ display: inline; }
 #status{ display: inline; }
+#deadLinkCount{ display: inline; }

@@ -30,7 +30,7 @@ module.exports = {
     closeConnection: function(callBack){
 
         if (callBack)
-            mongoose.connection.once("close", callBack)
+            mongoose.connection.on("close", callBack)
 
         mongoose.connection.close()
     },

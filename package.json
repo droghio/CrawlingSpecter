@@ -17,8 +17,10 @@
     "passport": "^0.2.0",
     "querystring": "^0.2.0",
     "request": "^2.36.0",
+    "sandbox": "^0.8.5",
     "socket.io": "^1.0.4",
     "spooky": "^0.2.4",
-    "url": "^0.10.1"
+    "url": "^0.10.1",
+    "validator": "^3.14.1"
   }
 }

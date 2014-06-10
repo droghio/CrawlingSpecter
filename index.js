@@ -24,6 +24,7 @@ var numWorkers = 32;
 var workers = []
 var updateParameters
 var status = "idle"
+var linkaccept = "";
 
 
 function killEverything(metoo){
@@ -32,7 +33,8 @@ function killEverything(metoo){
     for (worker = 0; worker < workers.length; worker++){
         console.log("\tKilling child " + worker + ".")
         server.updateUI({ log:"\tKilling child " + worker + ".", color: "red" })
-        workers[worker].send({ stop:"SIGTERM" })
+        try{workers[worker].send({ stop:"SIGTERM" })}
+        catch(e){ server.updateUI({ log:"\tChild " + worker + " overkilled!", color: "red" })}
         //workers[worker].kill()
     }
     
@@ -45,6 +47,10 @@ function killEverything(metoo){
 
 
 updateParameters = function(parameters){
+
+    if (parameters.numWorkers){numWorkers = parameters.numWorkers}
+
+    if (parameters.linkaccept){linkaccept = parameters.linkaccept;} 
 
     if (parameters["type"] == "resume"){status = "resumming"; startCrawl()}
 
@@ -79,11 +85,15 @@ process.stdin.on("keypress", function(hmm, key){ if (key && key.ctrl && key.name
 
 
 function startCrawl(){
+
+    killEverything(false)
+
     status = "starting"
     console.log("New crawl at: " + new Date().getTime());
     console.log("Let's get this show on the road.");
     for (worker = 0; worker < numWorkers; worker++){
         workers[worker] = child.fork("worker.js", [worker]);
+        workers[worker].send({ start: 1, linkaccept: linkaccept })
         workers[worker].on("message", function(update){update.status = status; server.updateUI(update)});
     }
     status = "crawling"
