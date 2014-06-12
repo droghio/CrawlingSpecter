@@ -12,37 +12,7 @@
 
         <script src="https://cdn.socket.io/socket.io-1.0.4.js"></script>
         <script src="/socket.io/socket.io.js"></script>
-        <script>var socket = io.connect(window.location.hostname + ":8001");</script>
-        <script type="text/javascript">
-            socket.on("uiUpdate", function (update){ 
-                if (  update.count && ( !Number($("#countQueue").text()) || update.count > Number($("#countQueue").text()) )  )
-                    $("#countQueue").text(update.count);
-
-                if (update.status) 
-                    $("#status").text(update.status);
-
-                if (update.deadlink){
-                    $("#deadlinks").append("<p style='color: red'>" + update.deadlink + "</p>");
-                    $("#deadlinkcount").text( $("#deadlinks > p").length() )
-                }
-
-                    
-                $("#log").append("<p style='color:" + update.color + "'>" + update.log + "</p>");
-                $("#log").scrollTop(document.getElementById("log").scrollHeight)
-            })
-
-            function updateParameters(type){
-                if (type || window.confirm("Starting a new crawl will purge all previous results.\n Continue?")){
-                    socket.emit("paramUpdate", {
-                        url: $("#url").val(), 
-                        numbots: $("#numberWorkers").val(),
-                        type: type,
-                        numWorkers: $("#numberWorkers").val(),
-                        linkaccept: $("#linkAccept").val()
-                    })
-                }
-            }
-        </script>
+        <script type="text/javascript" src="/js/index.js"></script>
 		
         <meta name="apple-mobile-web-app-capable" content="yes"></meta>
 		<meta name="apple-mobile-web-app-status-bar-style" content="black"></meta>
@@ -65,8 +35,8 @@
                     <div>Links queued: <p id="countQueue">hi</p></div>
                     <div>Status: <p id="status"></p></div>
                     <p><div id="deadlinks">Dead links:</div></p>
-                    <p><div>Dead links (since page load): <p id="deadLinkCount">0</p></div></p>
-                    <p>Custom Link Filter<textarea id="linkAccept" rows=20 style="display: block; width: 98vw;"></textarea></p>
+                    <p><div>Dead links: <p id="deadLinkCount">0</p></div></p>
+                    <p>Custom Link Filter<textarea id="linkAccept" rows=20 style="display: block; width: 98vw;">(winurl.indexOf("syr.edu") == -1) || link.indexOf("suevents") != -1</textarea></p>
 				</p>
             </main>
 		</section>

@@ -7,6 +7,8 @@ module.exports = {
         depth: Number,
         date: Number,
         valid: Boolean,
+        pending: Boolean,
+        referers: [ String ],
         numberlinks: {type: Number, default: 0}
 	})
 }

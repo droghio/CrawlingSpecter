@@ -16,6 +16,7 @@ var key = require("keypress")
 var server = require("./server.js")
 var stream = require("stream")
 var links = require("./links")
+var shouldrebootchildren = true
 
 key(process.stdin)
 process.stdin.setRawMode(true)
@@ -25,17 +26,19 @@ var workers = []
 var updateParameters
 var status = "idle"
 var linkaccept = "";
+var uiUpdateInterval = null
+var linksleft = 0
 
 
 function killEverything(metoo){
     //Time to kill all children processes...
     console.log("Killing all children processes.")
+    shouldrebootchildren = false
     for (worker = 0; worker < workers.length; worker++){
         console.log("\tKilling child " + worker + ".")
         server.updateUI({ log:"\tKilling child " + worker + ".", color: "red" })
         try{workers[worker].send({ stop:"SIGTERM" })}
         catch(e){ server.updateUI({ log:"\tChild " + worker + " overkilled!", color: "red" })}
-        //workers[worker].kill()
     }
     
     if (metoo){
@@ -46,18 +49,55 @@ function killEverything(metoo){
 }
 
 
+function restartChild(worker){
+    
+    if (!shouldrebootchildren || worker >= numWorkers){ return }
+    
+    console.log("Attempting reboot of child " + worker)
+    if (worker != -1){ 
+        console.log("Attempting reboot of child " + worker)
+        try{workers[worker].send({ stop:"SIGTERM" })}
+        catch(e){ server.updateUI({ log:"\tChild " + worker + " overkilled!", color: "yellow" })}
+        workers[worker] = child.fork("worker.js", [worker]);
+        workers[worker].send({ start: 1, linkaccept: linkaccept })
+        workers[worker].on("message", function(update){update.status = status; server.updateUI(update)});
+        workers[worker].on("close", function(){restartChild(-1)})
+    }
+
+    else{
+        for (index = 0; index < numWorkers; index++){
+            if (!workers[index].connected && index <= linksleft){
+                 workers[index] = child.fork("worker.js", [index]);
+                 workers[index].send({ start: 1, linkaccept: linkaccept })
+                 workers[index].on("message", function(update){update.status = status; server.updateUI(update)});
+                 workers[index].on("close", function(){restartChild(-1)})
+            }
+        }
+    }
+}
+
+
 updateParameters = function(parameters){
 
     if (parameters.numWorkers){numWorkers = parameters.numWorkers}
 
     if (parameters.linkaccept){linkaccept = parameters.linkaccept;} 
 
-    if (parameters["type"] == "resume"){status = "resumming"; startCrawl()}
+    if (parameters["type"] == "resume"){
+        if (status == "paused" || status == "idle"){
+            clearInterval(uiUpdateInterval)
+            status = "resumming";
+            startCrawl()
+        }
+        else
+            server.updateUI({ log: "Cannot resume while a crawl is running.", color: "yellow" })
+    }
 
     else if (parameters["type"] == "stop"){
         //links.closeConnection();
         status = "paused"
         server.updateUI({ log: "Pausing Crawl", color: "red" })
+        clearInterval(uiUpdateInterval)
         killEverything(false)
     }
 
@@ -65,7 +105,7 @@ updateParameters = function(parameters){
         status = "restarting"
         links.closeConnection();
         console.log("UPDATE")
-        killEverything(false)
+        clearInterval(uiUpdateInterval)
         
         links.loadConnection(function(){
             links.purgeDatabase(function (){
@@ -74,8 +114,29 @@ updateParameters = function(parameters){
         });
     }
 
-    server.updateUI({ status: status })
+}
 
+
+updateUI = function(){
+    links.countDocuments(function (count){
+        linksleft = count
+        console.log("Number queued is now: " + count + ".\nNext page");
+        server.updateUI({ count: count })
+
+        if (linksleft == 0){
+            updateParameters({ type: "stop" });
+            console.log("Crawl completed at " + new Date().getTime())
+            server.updateUI({ status: "complete", log: "Crawl complete", color: "green" })
+        }
+
+    })
+
+    links.getDeadLinks(function (deadlinks){
+        //Might want to log dead links elsewhere.
+        server.updateUI({ deadlink: deadlinks })
+    })
+
+    server.updateUI({ status: status })
 }
 
 
@@ -87,6 +148,9 @@ process.stdin.on("keypress", function(hmm, key){ if (key && key.ctrl && key.name
 function startCrawl(){
 
     killEverything(false)
+    shouldrebootchildren = true
+
+    uiUpdateInterval = setInterval(updateUI, 4000)
 
     status = "starting"
     console.log("New crawl at: " + new Date().getTime());
@@ -95,11 +159,10 @@ function startCrawl(){
         workers[worker] = child.fork("worker.js", [worker]);
         workers[worker].send({ start: 1, linkaccept: linkaccept })
         workers[worker].on("message", function(update){update.status = status; server.updateUI(update)});
+        workers[worker].on("close", function(){restartChild(-1)});
     }
     status = "crawling"
     console.log("Successfully forked " + numWorkers + " subprocesses.");
-    server.updateUI({ log: "Successfully forked " + numWorkers + " subprocesses.", color: "green", status: status })
+    server.updateUI({ log: "Successfully forked " + numWorkers + " subprocesses.", color: "green", status: status, count: "N/A" })
 }
 
-
-//startCrawl()
