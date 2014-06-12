@@ -3,7 +3,7 @@ CrawlingSpecter
 
 Simple web crawler using NodeJS.
 
---NOTE--
+NOTE
 
 You must have nodejs installed and access to a mongodb.
 I use MongoHQ, but any mongo database will work.
@@ -11,7 +11,7 @@ I use MongoHQ, but any mongo database will work.
 
 
 
---SETUP--
+SETUP
 
 After you have installed node run:
   ```npm install```
@@ -34,7 +34,7 @@ Then for express:
   
   
   
---Running--
+RUNNING
 
 Move to the CrawlingSpecter install directory and run:
   ```node index.js```
@@ -50,7 +50,7 @@ Move to the CrawlingSpecter install directory and run:
   
   
   
---Configuration--
+CONFIGURATION
 
 Simply type in the url you wish to crawl (don't forget the protocal eg. "http://"),
 specify the number of worker processes, and hit start crawl.
@@ -70,7 +70,7 @@ When the crawler visits a page it records whether the page exists or not (403/50
 
 
 
---Details--
+DETAILS
 
 Link detection:
 The crawler simply reads the href values of all anchor "<a>" tags in the source html. It will ignore all anchors that only jump to different locaitons in the same page.
