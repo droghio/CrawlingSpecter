@@ -6,7 +6,7 @@ CrawlingSpecter
 ###PREREQUISITES
 
 You must have nodejs installed and access to a mongodb.
-I use MongoHQ, but any mongo database will work.
+I use MongoHQ but any mongo database should work.
 
 
 
@@ -23,7 +23,7 @@ For mongodb:
   
       export MONGO_USER="your_mongo_username"
       export MONGO_PASSWORD="your_mongo_passward"
-      export MONGO_URL="your_mongo_URL/the_database"
+      export MONGO_URL="your_mongo_URL/the_database" (Do not include mongodb://.)
   
 
 Then for express:
