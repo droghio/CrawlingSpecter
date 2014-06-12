@@ -4,6 +4,7 @@ CrawlingSpecter
 Simple web crawler using NodeJS.
 
 --NOTE--
+
 You must have nodejs installed and access to a mongodb.
 I use MongoHQ, but any mongo database will work.
 
@@ -11,6 +12,7 @@ I use MongoHQ, but any mongo database will work.
 
 
 --SETUP--
+
 After you have installed node run:
   ```npm install```
   
@@ -33,6 +35,7 @@ Then for express:
   
   
 --Running--
+
 Move to the CrawlingSpecter install directory and run:
   ```node index.js```
   
@@ -48,6 +51,7 @@ Move to the CrawlingSpecter install directory and run:
   
   
 --Configuration--
+
 Simply type in the url you wish to crawl (don't forget the protocal eg. "http://"),
 specify the number of worker processes, and hit start crawl.
 
@@ -57,9 +61,7 @@ If you wish to contain your search you can add a conditional statement into the 
 If the statement evaluates true then the link will be skipped.
 To access the current page's url use the variable ```winurl```, and to see the link currently selected use ```link```.
 
-Eg.
-
-Don't crawl any links pointing to youtube.com, and visit pages on google.com but don't record their links.
+Example: Don't crawl any links pointing to youtube.com, and visit pages on google.com but don't record their links.
 
 ```(links.indexOf("youtube.com") != -1 || winurl.indexof("google.com") != -1)```
 
