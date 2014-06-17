@@ -22,7 +22,7 @@ To set up the web ui and mongo bindings you'll need to set a few environment var
 For mongodb:
   
       export MONGO_USER="your_mongo_username"
-      export MONGO_PASSWORD="your_mongo_passward"
+      export MONGO_PASSWORD="your_mongo_password"
       export MONGO_URL="your_mongo_URL/the_database" #(Do not include mongodb://.)
   
 
@@ -74,13 +74,13 @@ When the crawler visits a page it records whether the page exists or not (403/50
 ###DETAILS
 
 ***Link detection:***
-The crawler simply reads the href values of all anchor "<a>" tags in the source html. It will ignore all anchors that only jump to different locaitons in the same page.
+The crawler simply reads the href values of all anchor "&lt;a&gt;" tags in the source html. It will ignore all anchors that only jump to different locaitons in the same page.
 
 ***Valid Page detection:***
-When the crawler lands on a page it checks the http status code. If this code is above 400 it records the page as invalid.
+When the crawler lands on a page it checks the http status code. If this code is 400 or above it records the page as invalid.
 
 ***Workers:***
-To speed up crawling it is possible to dispatch many crawling bots simulatiously. For a Core2 Duo I suggest 4-10 bots max. Your milage will very. Keep in mind more bots does not guarantee better preformance, but feel free to play with the setting. I've gone over 100 workers without melting my Mac Mini, but gains were negligible.
+To speed up crawling it is possible to dispatch many crawling bots simulatiously. For a Core2 Duo I suggest 4-10 bots max. Your milage will vary. Keep in mind more bots does not guarantee better preformance, but feel free to play with the setting. I've gone over 100 workers without melting my Mac Mini, but gains were negligible.
 
 ***Custom Link Filter:***
 The filter executes directly in the worker's runtime, meaning it is a huge security hole. I'm working on sandboxing the filter but for now be careful where you deploy this service.
