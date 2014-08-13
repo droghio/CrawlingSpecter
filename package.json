@@ -1,6 +1,6 @@
 {
   "name": "Crawler",
-  "version": "0.0.1-a",
+  "version": "0.0.1-b",
   "description": "Simple NodeJS webcrawler.",
   "main": "index.js",
   "scripts": {
