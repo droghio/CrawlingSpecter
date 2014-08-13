@@ -119,7 +119,7 @@ module.exports = {
     },
 
 
-    updateLinkStatus: function(url, depth, numberlinks, valid, visited, pending, callBack){
+    updateLinkStatus: function(url, depth, numberlinks, valid, visited, pending, callBack, links){
         var Links = mongoose.model('Links', models.linkscheme);
         console.log(url)
         Links.findOne({ url: url }, function (err, link){
@@ -132,6 +132,7 @@ module.exports = {
                 link.depth = depth
                 link.visited = visited
                 link.pending = pending
+                link.links = links
 
                 link.save()
 

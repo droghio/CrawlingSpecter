@@ -86,13 +86,13 @@ var resetCrawl = function(){
 }
 
 
-var crawldone = function(winurl, linkcount, resstat) {
-    console.log("\nChild " + process.argv[2] + " says: " + "\nOn page: " + winurl + " Found: " + linkcount + " pages.");
+var crawldone = function(winurl, linkcount, resstat, linksfound) {
+    console.log("\nChild " + process.argv[2] + " says: " + "\nOn page: " + winurl + " Found: " + linkcount + " pages. " + linksfound);
     lastmessage = "\tChild " + process.argv[2] + " says: " + "On page: " + winurl + " Found: " + linkcount + " pages."
 
     //It is possible for our output to be a little jumbled since we are using promises to print.
     //It should still be readable, but lines might be flipped.
-    links.updateLinkStatus(winurl, currentpage, linkcount, (Number(resstat) < 400), true, false, null)
+    links.updateLinkStatus(winurl, currentpage, linkcount, (Number(resstat) < 400), true, false, null, linksfound)
 
     deadlink = null
     if (Number(resstat) > 400)
@@ -133,6 +133,7 @@ pullLinks = function (){
             winurl = queue[0]
             link = null
             firstloop = true;
+            linksfound = []
      
             //Now repeat for the rest.
             while (link || firstloop){
@@ -145,6 +146,7 @@ pullLinks = function (){
                 //Find next valid link.
                 do{
                     link = $("a").eq(linkcount).attr("href")
+                    linksfound.push(link ? "" : typeof(link) !== "string")
                     linksskipped += 1;
                     linkcount += 1;
                 } while (  link && ( (link.indexOf("#") != -1 && !countAnchors) || !validator.isURL(link) || eval(linkaccept) )  )
@@ -155,7 +157,7 @@ pullLinks = function (){
     
                 firstloop = false;
             }
-            return crawldone(winurl, linkcount, res.statusCode);
+            return crawldone(winurl, linkcount, res.statusCode, linksfound);
         }
     });
 }

@@ -9,6 +9,7 @@ module.exports = {
         valid: Boolean,
         pending: Boolean,
         referers: [ String ],
-        numberlinks: {type: Number, default: 0}
+        numberlinks: {type: Number, default: 0},
+        links: [ String ]
 	})
 }
