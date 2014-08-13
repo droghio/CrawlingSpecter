@@ -87,7 +87,7 @@ var resetCrawl = function(){
 
 
 var crawldone = function(winurl, linkcount, resstat, linksfound) {
-    console.log("\nChild " + process.argv[2] + " says: " + "\nOn page: " + winurl + " Found: " + linkcount + " pages. " + linksfound);
+    console.log("\nChild " + process.argv[2] + " says: " + "\nOn page: " + winurl + " Found: " + linkcount + " pages. ");
     lastmessage = "\tChild " + process.argv[2] + " says: " + "On page: " + winurl + " Found: " + linkcount + " pages."
 
     //It is possible for our output to be a little jumbled since we are using promises to print.
@@ -146,7 +146,7 @@ pullLinks = function (){
                 //Find next valid link.
                 do{
                     link = $("a").eq(linkcount).attr("href")
-                    linksfound.push(link ? "" : typeof(link) !== "string")
+                    linksfound.push( typeof(link) === "string" ? (urlsolver.resolve(winurl, link)) : "" )
                     linksskipped += 1;
                     linkcount += 1;
                 } while (  link && ( (link.indexOf("#") != -1 && !countAnchors) || !validator.isURL(link) || eval(linkaccept) )  )

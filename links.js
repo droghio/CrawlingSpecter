@@ -119,12 +119,12 @@ module.exports = {
     },
 
 
-    updateLinkStatus: function(url, depth, numberlinks, valid, visited, pending, callBack, links){
+    updateLinkStatus: function(url, depth, numberlinks, valid, visited, pending, callBack, linksfound){
         var Links = mongoose.model('Links', models.linkscheme);
-        console.log(url)
+        //console.log(url)
         Links.findOne({ url: url }, function (err, link){
             if (err)
-                return console.log("Mongoose Error Update " + err);
+                return console.log("Mongoose Error Update ");
 
             if (link){
                 link.numberlinks = numberlinks
@@ -132,9 +132,9 @@ module.exports = {
                 link.depth = depth
                 link.visited = visited
                 link.pending = pending
-                link.links = links
+                link.links = linksfound
 
-                link.save()
+                link.save(function (err){  if (err){ console.log("ERROR: " + err) }  })
 
                 if (callBack)
                    return callBack()
