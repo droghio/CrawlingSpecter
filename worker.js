@@ -22,7 +22,10 @@
 
 //--Includes-----------------------
 var cheerio = require('cheerio')
+
 var request = require('request')
+request = request.defaults({ jar: request.jar() });
+
 var links = require("./links")
 var validator = require("validator")
 
@@ -119,8 +122,9 @@ pullLinks = function (){
     linkcount = 0;
     link = 0
     currentpage = 100;
-    
-    request(queue[0], function (err, res, html) {
+   
+ 
+   request(queue[0], function (err, res, html) { //Emitter leak, I don't think it's me.
 
         if (html){
             var $ = cheerio.load(html)
@@ -156,6 +160,7 @@ pullLinks = function (){
                 //TODO SANDBOX!!!!
     
                 firstloop = false;
+             
             }
             return crawldone(winurl, linkcount, res.statusCode, linksfound);
         }

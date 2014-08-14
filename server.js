@@ -18,7 +18,7 @@ module.exports = {
         
         app.get('/crawl?page=', function(req, res) { fetchNextLink(req.url, res); });
         app.listen(port, function() { console.log("Static Server Listening on " + port); });
-
+        process.setMaxListeners(0)
         //Forward parameter update request to index process.
         io.on('connection', function (newsocket) {
             socket = newsocket;

@@ -29,6 +29,7 @@ var linkaccept = "";
 var uiUpdateInterval = null
 var linksleft = 0
 
+process.setMaxListeners(20)
 
 function killEverything(metoo){
     //Time to kill all children processes...
@@ -61,7 +62,8 @@ function restartChild(worker){
         workers[worker] = child.fork("worker.js", [worker]);
         workers[worker].send({ start: 1, linkaccept: linkaccept })
         workers[worker].on("message", function(update){update.status = status; server.updateUI(update)});
-        workers[worker].on("close", function(){restartChild(-1)})
+        function setrestart(worker){ workers[worker].on("close", function(){restartChild(worker)}); }
+        setrestart(worker)
     }
 
     else{
@@ -70,7 +72,8 @@ function restartChild(worker){
                  workers[index] = child.fork("worker.js", [index]);
                  workers[index].send({ start: 1, linkaccept: linkaccept })
                  workers[index].on("message", function(update){update.status = status; server.updateUI(update)});
-                 workers[index].on("close", function(){restartChild(-1)})
+                function setrestart(worker){ workers[worker].on("close", function(){restartChild(worker)}); }
+                setrestart(worker)
             }
         }
     }
@@ -131,6 +134,10 @@ updateUI = function(){
 
     })
 
+    links.countVisitedDocuments(function (count){
+
+    })
+    
     links.getDeadLinks(function (deadlinks){
         //Might want to log dead links elsewhere.
         server.updateUI({ deadlink: deadlinks })
@@ -156,10 +163,25 @@ function startCrawl(){
     console.log("New crawl at: " + new Date().getTime());
     console.log("Let's get this show on the road.");
     for (worker = 0; worker < numWorkers; worker++){
+
+        /* Why doesn't this work.
+        workers[worker] = child.fork("worker.js", [worker]);
+        workers[worker].id = worker;
+        workers[worker].send({ start: 1, linkaccept: linkaccept })
+        workers[worker].on("message", function(update){update.status = status; server.updateUI(update)});
+        workers[worker].on("close", function(){restartChild(worker}); //Can't use workers since closure doesn't work.
+        */
+
         workers[worker] = child.fork("worker.js", [worker]);
         workers[worker].send({ start: 1, linkaccept: linkaccept })
         workers[worker].on("message", function(update){update.status = status; server.updateUI(update)});
-        workers[worker].on("close", function(){restartChild(-1)});
+
+        function setrestart(worker){
+            workers[worker].on("close", function(){restartChild(worker)});
+        }
+
+        setrestart(worker)
+
     }
     status = "crawling"
     console.log("Successfully forked " + numWorkers + " subprocesses.");

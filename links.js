@@ -46,6 +46,18 @@ module.exports = {
         });
     },
 
+    countVisitedDocuments: function(callBack){
+        var db = mongoose.connection;
+        var Links = mongoose.model('Links', models.linkscheme);
+
+        Links.find({ visited: true}).count().exec(function (err, count){
+            if (err)
+                return console.log("ERROR: MongoDB counting error.")
+            return callBack(count)
+        });
+    },
+
+
 
     saveLink: function(url, depth, numberlinks, callBack, referers){
         //Records link in db if it doesn't exist already.
