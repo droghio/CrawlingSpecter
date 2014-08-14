@@ -24,7 +24,7 @@
 var cheerio = require('cheerio')
 
 var request = require('request')
-request = request.defaults({ jar: request.jar() });
+request = request.defaults({ jar: request.jar() }); //Seems to fix emitter leak.
 
 var links = require("./links")
 var validator = require("validator")

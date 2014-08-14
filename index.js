@@ -29,7 +29,6 @@ var linkaccept = "";
 var uiUpdateInterval = null
 var linksleft = 0
 
-process.setMaxListeners(20)
 
 function killEverything(metoo){
     //Time to kill all children processes...
@@ -164,7 +163,11 @@ function startCrawl(){
     console.log("Let's get this show on the road.");
     for (worker = 0; worker < numWorkers; worker++){
 
-        /* Why doesn't this work.
+        /* Why doesn't this work. 
+
+           The closure should keep the worker variable constant even when it is called later,
+           this doesn't happen they all call the last worker made.
+
         workers[worker] = child.fork("worker.js", [worker]);
         workers[worker].id = worker;
         workers[worker].send({ start: 1, linkaccept: linkaccept })
